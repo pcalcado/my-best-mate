@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project name="my-best-mate" default="build">
+  <property name="bin.dir" location="bin" />
+  <property name="gae.app.dir" location="war/WEB-INF/lib" />
+  <property name="lib.dir" location="lib"/>
+  <property name="source.dir" location="clj/src"/>
+  <property name="my-best-mate.jar" location="my-best-mate.jar"/>
+
+  <property name="gae.sdk.dir" location="/Users/pcalcado/code/tw-lab/gae4j/appengine-java-sdk-1.2.0" />
+
+  <path id="dependencies">
+    <fileset dir="${lib.dir}">
+      <include name="*.jar"/>
+    </fileset>
+    <fileset dir="${gae.sdk.dir}">
+      <include name="lib/**/*.jar" />
+    </fileset>
+  </path>
+
+  <target name="init">
+    <mkdir dir="${bin.dir}" />
+    <mkdir dir="${gae.app.dir}" />
+  </target>
+
+  <target name="clean" description="Remove generated files">
+    <delete file="${my-best-mate.jar}"/>
+    <delete dir="${bin.dir}"/>
+    <delete dir="${gae.app.dir}"/>
+  </target>
+
+  <target name="copy">
+    <copy todir="${gae.app.dir}">
+      <fileset dir="${lib.dir}" includes="**/*" />
+    </copy>
+    <copy todir="${gae.app.dir}" file="${my-best-mate.jar}" />
+  </target>
+
+  <target name="compile" description="Compile sources">
+    <java classname="clojure.lang.Compile">
+      <classpath>
+        <path location="${bin.dir}"/>
+        <path location="${source.dir}"/>
+	<path refid="dependencies"/>
+      </classpath>
+      <sysproperty key="clojure.compile.path" value="${bin.dir}"/>
+      <arg value="my-best-mate"/>
+    </java>
+  </target>
+
+  <target name="build" depends="init, compile, test, jar, copy"/>
+
+  <target name="jar"  description="Create jar file">
+    <jar jarfile="${my-best-mate.jar}">
+      <fileset dir="${bin.dir}" includes="**/*.class"/>
+    </jar>
+  </target>
+
+  <target name="test" description="Run unit tests" />
+</project>
