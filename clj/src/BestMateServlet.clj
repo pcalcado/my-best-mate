@@ -12,4 +12,4 @@
   (. (. resp getWriter) println text))
 
 (defn -doGet [_ req resp]
-  (write-to-resp resp "WTF?"))
+  (write-to-resp resp (process-request req)))
