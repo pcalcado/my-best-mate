@@ -8,6 +8,8 @@
 
   <property name="gae.sdk.dir" location="/Users/pcalcado/code/tw-lab/gae4j/appengine-java-sdk-1.2.0" />
 
+  <import file="${gae.sdk.dir}/config/user/ant-macros.xml" />
+
   <path id="dependencies">
     <fileset dir="${lib.dir}">
       <include name="*.jar"/>
@@ -36,7 +38,7 @@
   </target>
 
   <target name="compile" description="Compile sources">
-    <java classname="clojure.lang.Compile">
+    <java classname="clojure.lang.Compile" >
       <classpath>
         <path location="${bin.dir}"/>
         <path location="${source.dir}"/>
@@ -47,13 +49,24 @@
     </java>
   </target>
 
-  <target name="build" depends="init, compile, test, jar, copy"/>
-
-  <target name="jar"  description="Create jar file">
+  <target name="jar">
     <jar jarfile="${my-best-mate.jar}">
       <fileset dir="${bin.dir}" includes="**/*.class"/>
     </jar>
   </target>
 
-  <target name="test" description="Run unit tests" />
+  <target name="test"/>
+
+  <target name="run-dev-server">
+    <dev_appserver war="war" port="8080" >
+      <!--options> 
+        <arg value="- -jvm_flag=-Xdebug"/>
+        <arg value="- -jvm_flag=-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9999"/>
+      </options-->
+    </dev_appserver>
+  </target>
+
+  <target name="build" depends="init, compile, test, jar, copy"/>
+
+  <target name="local-deploy" depends="build, run-dev-server" />
 </project>

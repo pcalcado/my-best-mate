@@ -10,7 +10,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>mybestmate</servlet-name>
-		<url-pattern>/mybestmate</url-pattern>
+		<url-pattern>/user/*</url-pattern>
 	</servlet-mapping>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
