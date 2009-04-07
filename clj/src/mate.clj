@@ -16,8 +16,11 @@
 (defn- find-username [uri]
   (first (re-seq #"\w+$" uri)))
 
+(defn- twitter-page-url [username]
+  (str "http://twitter.com/" username))
+
 (defn- twitter-page-for [username]
-  (let [uri (str "http://twitter.com/" username)]
+  (let [uri (twitter-page-url username)]
     (println uri)
     (GET-body uri)))
 
@@ -68,11 +71,16 @@
 		      m))
 	  replies-map)))
 
+(defn- remove-at-sign [login]
+  (first (re-seq #"\w+$" login)))
+
 (defn process-request [req resp]
+  (write-to-resp resp "<html><head><title>Your Best (twitter) Mate!</title></head><body>")
   (let [username (find-username (. req getRequestURI))]
     (if username
       (let[twits (twits-in (twitter-feed-for username))]
-	(if twits
+	(if (seq twits)
 	  (let[friends (replied-friends-in twits)
 	       best-mate (most-replied (number-times-replied friends))]
-	    (write-to-resp resp (str "Your best mate is: " best-mate))))))))
+	    (write-to-resp resp (str "Your best mate is: <a href=\"" (twitter-page-url  (remove-at-sign best-mate))  "\">" best-mate "</a>")))))))
+  (write-to-resp resp "</body></html>"))
