@@ -71,6 +71,17 @@
   </target>
 
   <target name="build" depends="init, compile, test, jar, copy"/>
+  
+  <target name="request-logs">
+    <appcfg action="request_logs" war="war">
+      <options>
+        <arg value="--num_days=5"/>
+      </options>
+      <args>
+        <arg value="logs.txt"/>
+      </args>
+    </appcfg>
+  </target>
 
   <target name="local-deploy" depends="build, run-dev-server" />
   <target name="gae-deploy" depends="build, update-gae-server" />

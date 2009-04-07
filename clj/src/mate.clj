@@ -2,9 +2,18 @@
   (:import
    (java.net URL)
    (java.io InputStreamReader)
-   (java.io BufferedReader))
+   (java.io BufferedReader)
+   (org.apache.commons.logging Log)
+   (org.apache.commons.logging LogFactory))
+
   (:use [clojure.xml :only (parse)]
 	[clojure.contrib.str-utils :only (re-partition)]))
+
+(defn- log-info [ & txt]
+  (. (. LogFactory getLog (class " ")) info (str txt)))
+
+(defn- log-error [txt exception]
+  (. (. LogFactory getLog (class " ")) error txt exception))
 
 (defn- GET-body [uri]
   (with-open [reader (BufferedReader. (InputStreamReader. (. (URL. uri) openStream)))]
@@ -21,7 +30,7 @@
 
 (defn- twitter-page-for [username]
   (let [uri (twitter-page-url username)]
-    (println uri)
+    (log-info uri)
     (GET-body uri)))
 
 (defn- atom-url-in [html-page]
@@ -57,12 +66,21 @@
    {}
    replied-friend-list))
 
+(defn- error-in-feed [feed]
+  (:content (next (:content feed))))
+
+(defn- is-error-message? [feed]
+  (some #(= % :error) (map :tag feed)))
+
 (defn- twitter-feed-for [username]
   (let [uri (atom-url-in (twitter-page-for username))]
     (if uri
       (do
-	(println "getting " uri)
-	(parse uri)))))
+	(log-info "getting " uri)
+	(let [result (parse uri)]
+	  (if (is-error-message? result)
+	    (throw error-in-feed result)
+	    result))))))
     
 (defn- most-replied [replies-map]
   (first (reduce 
@@ -76,13 +94,17 @@
 
 (defn process-request [req resp]
   (write-to-resp resp "<html><head><title>Your Best (twitter) Mate!</title></head><body>")
-  (let [username (find-username (. req getRequestURI))]
-    (if username
-      (let[twits (twits-in (twitter-feed-for username))]
-	(if (seq twits)
-	  (let[friends (replied-friends-in twits)
-	       best-mate (most-replied (number-times-replied friends))]
-	    (write-to-resp resp (str "Your best mate is: <a href=\"" (twitter-page-url (remove-at-sign best-mate))  "\">" best-mate "</a>")))
-	  (write-to-resp resp (str "Could not find twits for user <a href=\"" (twitter-page-url username)  "\">" username "</a>"))))
-      (write-to-resp resp "Could not find twitter user in URI"))
-  (write-to-resp resp "</body></html>")))
+  (try
+   (let [username (find-username (. req getRequestURI))]
+     (if username
+       (let[twits (twits-in (twitter-feed-for username))]
+	 (if (seq twits)
+	   (let[friends (replied-friends-in twits)
+		best-mate (most-replied (number-times-replied friends))]
+	     (write-to-resp resp (str "Your best mate is: <a href=\"" (twitter-page-url (remove-at-sign best-mate))  "\">" best-mate "</a>")))
+	   (write-to-resp resp (str "Could not find twits for user <a href=\"" (twitter-page-url username)  "\">" username "</a>"))))
+       (write-to-resp resp "Could not find twitter user in URI")))
+     (catch Exception e
+       (log-error "Problem with request" e)
+       (write-to-resp resp (. e getMessage))))
+  (write-to-resp resp "</body></html>"))
