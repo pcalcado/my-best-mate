@@ -82,5 +82,7 @@
 	(if (seq twits)
 	  (let[friends (replied-friends-in twits)
 	       best-mate (most-replied (number-times-replied friends))]
-	    (write-to-resp resp (str "Your best mate is: <a href=\"" (twitter-page-url  (remove-at-sign best-mate))  "\">" best-mate "</a>")))))))
-  (write-to-resp resp "</body></html>"))
+	    (write-to-resp resp (str "Your best mate is: <a href=\"" (twitter-page-url (remove-at-sign best-mate))  "\">" best-mate "</a>")))
+	  (write-to-resp resp (str "Could not find twits for user <a href=\"" (twitter-page-url username)  "\">" username "</a>"))))
+      (write-to-resp resp "Could not find twitter user in URI"))
+  (write-to-resp resp "</body></html>")))
